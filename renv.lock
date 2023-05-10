@@ -9,6 +9,17 @@
     ]
   },
   "Packages": {
+    "VaTools": {
+      "Package": "VaTools",
+      "Version": "0.2.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "VaTools",
+      "RemoteUsername": "suchard-group",
+      "RemoteRef": "v0.2.0",
+      "Requirements": []
+    },  
     "CirceR": {
       "Package": "CirceR",
       "Version": "1.3.0",

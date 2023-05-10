@@ -33,6 +33,14 @@ execute <- function(jobContext) {
     sharedResources = jobContext$sharedResources,
     settings = jobContext$settings
   )
+  
+  if (!is.null(jobContext$settings$refactor) &&
+      jobContext$settings$refactor) {
+    for (i in 1:length(cohortDefinitionSet)) {
+      newSql <- VaTools::translateToCustomVaSqlText(cohortDefinitionSet$sql[i], NULL)
+      cohortDefinitionSet$sql[i] <- newSql
+    }
+  }
 
   rlang::inform("Executing")
   # Establish the connection and ensure the cleanup is performed
