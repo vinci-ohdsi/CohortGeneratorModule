@@ -68,7 +68,6 @@
       "RemoteUsername": "ohdsi",
       "RemoteRef": "v0.1.1"
     },
->>>>>>> upstream/main
     "CirceR": {
       "Package": "CirceR",
       "Version": "1.3.0",
