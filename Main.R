@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortGeneratorModule
 #
@@ -14,8 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Adding library references that are required for Strategus
+library(CohortGenerator)
+library(DatabaseConnector)
+library(keyring)
+library(ParallelLogger)
+library(SqlRender)
+
+# Adding RSQLite so that we can test modules with Eunomia
+library(RSQLite)
+
 # Module methods -------------------------
 execute <- function(jobContext) {
+  # Setting the readr.num_threads=1 to prevent multi-threading for reading
+  # and writing csv files which sometimes causes the module to hang on
+  # machines with multiple processors. This option is only overridden
+  # in the scope of this function.
+  withr::local_options(list(readr.num_threads=1))
+  
   rlang::inform("Validating inputs")
   checkmate::assert_list(x = jobContext)
   if (is.null(jobContext$settings)) {
@@ -42,6 +58,14 @@ execute <- function(jobContext) {
     }
   }  
 
+  if (!is.null(jobContext$settings$refactor) &&
+      jobContext$settings$refactor) {
+    for (i in 1:nrow(cohortDefinitionSet)) {
+      newSql <- VaTools::translateToCustomVaSqlText(cohortDefinitionSet$sql[i], NULL)
+      cohortDefinitionSet$sql[i] <- newSql
+    }
+  }  
+  
   rlang::inform("Executing")
   # Establish the connection and ensure the cleanup is performed
   connection <- DatabaseConnector::connect(jobContext$moduleExecutionSettings$connectionDetails)
@@ -100,8 +124,12 @@ execute <- function(jobContext) {
     connection = connection,
     cohortDatabaseSchema = jobContext$moduleExecutionSettings$workDatabaseSchema,
     cohortTable = jobContext$moduleExecutionSettings$cohortTableNames$cohortTable,
+    cohortDefinitionSet = cohortDefinitionSet,
     databaseId = jobContext$moduleExecutionSettings$databaseId
   )
+  
+  # Filter to columns in the results data model
+  cohortCounts <- filterCohortCountsColumns(cohortCounts)
 
   CohortGenerator::writeCsv(
     x = cohortCounts,
@@ -150,19 +178,21 @@ execute <- function(jobContext) {
       negativeControlOutcomeCohortSet = negativeControlOutcomeSettings$cohortSet,
       tempEmulationSchema = jobContext$moduleExecutionSettings$tempEmulationSchema,
       occurrenceType = negativeControlOutcomeSettings$occurrenceType,
-      detectOnDescendants = negativeControlOutcomeSettings$detectOnDescendants
+      detectOnDescendants = negativeControlOutcomeSettings$detectOnDescendants,
+      incremental = jobContext$settings$incremental,
+      incrementalFolder = jobContext$moduleExecutionSettings$workSubFolder      
     )
 
-    CohortCountsNegativeControlOutcomes <- CohortGenerator::getCohortCounts(
+    cohortCountsNegativeControlOutcomes <- CohortGenerator::getCohortCounts(
       connection = connection,
       cohortDatabaseSchema = jobContext$moduleExecutionSettings$workDatabaseSchema,
       cohortTable = jobContext$moduleExecutionSettings$cohortTableNames$cohortTable,
       databaseId = jobContext$moduleExecutionSettings$databaseId,
       cohortIds = negativeControlOutcomeSettings$cohortSet$cohortId
     )
-
+    
     CohortGenerator::writeCsv(
-      x = CohortCountsNegativeControlOutcomes,
+      x = cohortCountsNegativeControlOutcomes,
       file = file.path(resultsFolder, "cohort_count_neg_ctrl.csv")
     )
   }
@@ -209,6 +239,8 @@ createDataModelSchema <- function(jobContext) {
   moduleInfo <- getModuleInfo()
   tablePrefix <- moduleInfo$TablePrefix
   resultsDatabaseSchema <- jobContext$moduleExecutionSettings$resultsDatabaseSchema
+  # Workaround for issue https://github.com/tidyverse/vroom/issues/519:
+  readr::local_edition(1)
   resultsDataModel <- ResultModelManager::loadResultsDataModelSpecifications(
     filePath = "resultsDataModelSpecification.csv"
   )
@@ -270,6 +302,11 @@ getModuleInfo <- function() {
   }
 
   return(cohortDefinitionSet)
+}
+
+filterCohortCountsColumns <- function(cohortCounts) {
+  # Filter to columns in the results data model
+  return(cohortCounts[c("databaseId", "cohortId", "cohortEntries", "cohortSubjects")])
 }
 
 createCohortDefinitionSetFromJobContext <- function(sharedResources, settings) {

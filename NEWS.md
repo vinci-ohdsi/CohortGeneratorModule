@@ -1,3 +1,20 @@
+CohortGeneratorModule 0.4.2
+=======================
+- Adding `aws.s3` and dependencies to renv.lock for bulk upload to RedShift.
+
+CohortGeneratorModule 0.4.1
+=======================
+- Update execute() to set options(readr.num_threads=1) to prevent hanging when reading/writing incremental csv files.
+
+CohortGeneratorModule 0.4.0
+=======================
+- Update to use CohortGenerator v0.9.0
+- Add DuckDB to renv.lock
+
+CohortGeneratorModule 0.3.0
+=======================
+- Using renv project profiles to manage core packages required for module execution vs. those that are needed for development purposes.
+
 CohortGeneratorModule 0.2.1
 =======================
 - Update to use CohortGenerator v0.8.1
