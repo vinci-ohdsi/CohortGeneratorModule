@@ -19,35 +19,6 @@
       "RemoteUsername": "suchard-group",
       "RemoteRef": "v0.2.1",
       "Requirements": []
-    },    
-    "Andromeda": {
-      "Package": "Andromeda",
-      "Version": "0.6.3",
-      "Source": "Repository",
-      "Repository": "CRAN"
-    },
-    "BH": {
-      "Package": "BH",
-      "Version": "1.81.0-1",
-      "Source": "Repository",
-      "Repository": "CRAN"
-    },
-    "BeastJar": {
-      "Package": "BeastJar",
-      "Version": "1.10.6",
-      "Source": "Repository",
-      "Repository": "CRAN"
-    },
-    "BigKnn": {
-      "Package": "BigKnn",
-      "Version": "1.0.2",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "VaTools",
-      "RemoteUsername": "suchard-group",
-      "RemoteRef": "v0.2.1",
-      "Requirements": []
     },
     "CirceR": {
       "Package": "CirceR",
